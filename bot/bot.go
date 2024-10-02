@@ -91,7 +91,11 @@ func getDaySuffix(day int) string {
 
 func handlePrintingDays(discord *discordgo.Session, channelId string, startDate time.Time, daysCount int) {
 	// Initial message before listing days
-	initialMessage := "@everyone Play when? (add a 🐲 if you wanna play or a 🧙‍♂️ if you wanna DM)"
+	initialMessage := `@everyone Play when? React to the dates with:
+- 🐲 if you wanna play 
+- 🧙‍♂️ if you wanna DM 
+- 🏠 if you can host
+`
 	discord.ChannelMessageSend(channelId, initialMessage)
 
 	// Loop over the next X days starting from the calculated startDate
