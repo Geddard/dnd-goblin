@@ -131,6 +131,11 @@ func handleDays(discord *discordgo.Session, channelId string, daysFromToday stri
 		return
 	}
 
+	if count > 14 {
+		discord.ChannelMessageSend(channelId, "Printing more than 2 weeks seems a bit excessive, don't ya think?")
+		return
+	}
+
 	currentTime := time.Now()
 	startDate := currentTime.AddDate(0, 0, start)
 
@@ -187,7 +192,7 @@ func messages(discord *discordgo.Session, message *discordgo.MessageCreate) {
 
 	params := strings.Fields(message.Content)
 
-	mainParam := params[0]
+	mainParam := params[1]
 
 	switch {
 	case mainParam == Command.ABOUT:
@@ -199,13 +204,13 @@ func messages(discord *discordgo.Session, message *discordgo.MessageCreate) {
 	case mainParam == Command.DAYS:
 		// Ensure there are enough parameters before accessing
 		var param1, param2 string
-		if len(params) > 1 {
-			param1 = params[1]
+		if len(params) > 2 {
+			param1 = params[2]
 		} else {
 			param1 = ""
 		}
-		if len(params) > 2 {
-			param2 = params[2]
+		if len(params) > 3 {
+			param2 = params[3]
 		} else {
 			param2 = ""
 		}
