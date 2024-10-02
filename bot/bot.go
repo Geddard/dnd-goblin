@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,18 @@ import (
 )
 
 var BotToken string
+
+var Command = struct {
+	ABOUT string
+	HELP  string
+	ROLL  string
+	DAYS  string
+}{
+	ABOUT: "about",
+	HELP:  "help",
+	ROLL:  "roll",
+	DAYS:  "days",
+}
 
 func checkNilErr(e error) {
 	if e != nil {
@@ -50,10 +63,9 @@ func scheduleDaysMessage(discord *discordgo.Session) {
 		// Check if today is Friday and it's 6pm
 		if now.Weekday() == time.Friday && now.Hour() == 18 && now.Minute() == 0 {
 			// Replace "YOUR_CHANNEL_ID" with the actual channel ID you want to send the message to
-			channelID := "1213948847471067146"
+			channelID := "1253715243474096238"
 
-			// Simulate sending the `!days` command automatically
-			handleDays(discord, &discordgo.MessageCreate{Message: &discordgo.Message{ChannelID: channelID}}, 3)
+			handleDays(discord, channelID, "3", "7")
 
 			// Sleep for a full minute to avoid sending multiple messages within the same minute
 			time.Sleep(time.Minute)
@@ -77,19 +89,13 @@ func getDaySuffix(day int) string {
 	}
 }
 
-func handleDays(discord *discordgo.Session, message *discordgo.MessageCreate, days int) {
-	// Get the current date
-	currentTime := time.Now()
-
-	// Calculate the start date by adding 'days' to the current date
-	startDate := currentTime.AddDate(0, 0, days)
-
+func handlePrintingDays(discord *discordgo.Session, channelId string, startDate time.Time, daysCount int) {
 	// Initial message before listing days
 	initialMessage := "@everyone Play when? (add a 🐲 if you wanna play or a 🧙‍♂️ if you wanna DM)"
-	discord.ChannelMessageSend(message.ChannelID, initialMessage)
+	discord.ChannelMessageSend(channelId, initialMessage)
 
-	// Loop over the next 7 days starting from the calculated startDate
-	for i := 0; i < 7; i++ {
+	// Loop over the next X days starting from the calculated startDate
+	for i := 0; i < daysCount; i++ {
 		// Calculate the future date (startDate + i days)
 		day := startDate.AddDate(0, 0, i)
 
@@ -101,19 +107,46 @@ func handleDays(discord *discordgo.Session, message *discordgo.MessageCreate, da
 		formattedDay := fmt.Sprintf("%s %d%s %s", day.Format("Monday"), dayNum, suffix, day.Format("January"))
 
 		// Send each day as a separate message
-		discord.ChannelMessageSend(message.ChannelID, formattedDay)
+		discord.ChannelMessageSend(channelId, formattedDay)
 
 		// Add a delay to avoid rate-limiting issues
 		time.Sleep(2 * time.Second) // Adjust the delay as needed
 	}
 
 	// Final message
-	finalMessage := "If you see the above but can't play this week, please kindly respond to this message with an emoji"
-	discord.ChannelMessageSend(message.ChannelID, finalMessage)
+	finalMessage := "If you see the above but can't play these dates, please kindly respond to this message with an emoji"
+	discord.ChannelMessageSend(channelId, finalMessage)
+}
+
+func handleDays(discord *discordgo.Session, channelId string, daysFromToday string, daysCount string) {
+	start, err1 := strconv.Atoi(daysFromToday)
+	count, err2 := strconv.Atoi(daysCount)
+
+	if daysFromToday == "" || err1 != nil || start < 0 {
+		discord.ChannelMessageSend(channelId, "I need a number for how many days from now should i start counting, for example 'days <1> 7'")
+		return
+	}
+	if daysCount == "" || err2 != nil || count < 1 {
+		discord.ChannelMessageSend(channelId, "I need a number for how many days to count to after the start date, for example 'days 1 <7>'")
+		return
+	}
+
+	currentTime := time.Now()
+	startDate := currentTime.AddDate(0, 0, start)
+
+	handlePrintingDays(discord, channelId, startDate, count)
 }
 
 func handleAbout(discord *discordgo.Session, message *discordgo.MessageCreate) {
-	discord.ChannelMessageSend(message.ChannelID, "I'm a bot that helps printing scheduling messages and roll character stats, coded in Go by Javier Baccarelli")
+	discord.ChannelMessageSend(message.ChannelID, "I'm a bot that helps printing scheduling messages and roll character stats, coded in Go by Javier Baccarelli. You can checkout my code over here https://github.com/Geddard/dnd-goblin")
+}
+
+func handleHelp(discord *discordgo.Session, message *discordgo.MessageCreate) {
+	discord.ChannelMessageSend(message.ChannelID, `This is how to use me:
+- days: Print a scheduling message by sending "days <x> <y>" where <x> is replaced by a number of days from today (0 for today, 1 for tomorrow, and so on) and <y> should be replaced by the number of days to print after the start date, minimum 1.
+- roll: Roll basic D&D Character Stats.
+- about: Basic info about me.
+- help: Print this same message.`)
 }
 
 func rollDice() int {
@@ -152,12 +185,30 @@ func messages(discord *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
+	params := strings.Fields(message.Content)
+
+	mainParam := params[0]
+
 	switch {
-	case strings.Contains(message.Content, "!about"):
+	case mainParam == Command.ABOUT:
 		handleAbout(discord, message)
-	case strings.Contains(message.Content, "!roll"):
+	case mainParam == Command.HELP:
+		handleHelp(discord, message)
+	case mainParam == Command.ROLL:
 		handleRoll(discord, message)
-	case strings.Contains(message.Content, "!days"):
-		handleDays(discord, message, 1)
+	case mainParam == Command.DAYS:
+		// Ensure there are enough parameters before accessing
+		var param1, param2 string
+		if len(params) > 1 {
+			param1 = params[1]
+		} else {
+			param1 = ""
+		}
+		if len(params) > 2 {
+			param2 = params[2]
+		} else {
+			param2 = ""
+		}
+		handleDays(discord, message.ChannelID, param1, param2)
 	}
 }
