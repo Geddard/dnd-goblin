@@ -190,30 +190,39 @@ func messages(discord *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
-	params := strings.Fields(message.Content)
-
-	mainParam := params[1]
+	content := message.Content
 
 	switch {
-	case mainParam == Command.ABOUT:
+	case strings.Contains(content, Command.ABOUT):
 		handleAbout(discord, message)
-	case mainParam == Command.HELP:
+	case strings.Contains(content, Command.HELP):
 		handleHelp(discord, message)
-	case mainParam == Command.ROLL:
+	case strings.Contains(content, Command.ROLL):
 		handleRoll(discord, message)
-	case mainParam == Command.DAYS:
-		// Ensure there are enough parameters before accessing
+	case strings.Contains(content, Command.DAYS):
+		// Find the index of the "days" command
+		index := strings.Index(content, Command.DAYS)
+		if index == -1 {
+			return // If "days" is not found, exit
+		}
+
+		// Extract parameters after the "days" command
+		params := strings.Fields(content[index:])
+
+		// Ensure there are at least two parameters after "days"
 		var param1, param2 string
-		if len(params) > 2 {
-			param1 = params[2]
+		if len(params) >= 2 {
+			param1 = params[1]
 		} else {
 			param1 = ""
+			return
 		}
-		if len(params) > 3 {
-			param2 = params[3]
+		if len(params) >= 3 {
+			param2 = params[2]
 		} else {
 			param2 = ""
 		}
+
 		handleDays(discord, message.ChannelID, param1, param2)
 	}
 }
