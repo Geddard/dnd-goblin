@@ -22,10 +22,10 @@ var Command = struct {
 	ROLL  string
 	DAYS  string
 }{
-	ABOUT: "about",
-	HELP:  "help",
-	ROLL:  "roll",
-	DAYS:  "days",
+	ABOUT: "!about",
+	HELP:  "!help",
+	ROLL:  "!roll",
+	DAYS:  "!days",
 }
 
 func checkNilErr(e error) {
@@ -148,10 +148,10 @@ func handleAbout(discord *discordgo.Session, message *discordgo.MessageCreate) {
 
 func handleHelp(discord *discordgo.Session, message *discordgo.MessageCreate) {
 	discord.ChannelMessageSend(message.ChannelID, `This is how to use me:
-- days: Print a scheduling message by sending "days <x> <y>" where <x> is replaced by a number of days from today (0 for today, 1 for tomorrow, and so on) and <y> should be replaced by the number of days to print after the start date, minimum 1.
-- roll: Roll basic D&D Character Stats.
-- about: Basic info about me.
-- help: Print this same message.`)
+- !days: Print a scheduling message by sending "!days <x> <y>" where <x> is replaced by a number of days from today (0 for today, 1 for tomorrow, and so on) and <y> should be replaced by the number of days to print after the start date, minimum 1.
+- !roll: Roll basic D&D Character Stats.
+- !about: Basic info about me.
+- !help: Print this same message.`)
 }
 
 func rollDice() int {
