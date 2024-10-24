@@ -62,10 +62,15 @@ func scheduleDaysMessage(discord *discordgo.Session) {
 
 		// Check if today is Friday and it's 6pm
 		if now.Weekday() == time.Friday && now.Hour() == 18 && now.Minute() == 0 {
-			// Replace "YOUR_CHANNEL_ID" with the actual channel ID you want to send the message to
-			channelID := "1253715243474096238"
+			generalScheduleChannelID := "1253715243474096238"
+			campaignScheduleChannelID := "1290402453677674507"
 
-			handleDays(discord, channelID, "3", "7")
+			channelIDs := []string{generalScheduleChannelID, campaignScheduleChannelID}
+
+			// Send messages to both channels
+			for _, channelID := range channelIDs {
+				handleDays(discord, channelID, "3", "7")
+			}
 
 			// Sleep for a full minute to avoid sending multiple messages within the same minute
 			time.Sleep(time.Minute)
@@ -92,9 +97,9 @@ func getDaySuffix(day int) string {
 func handlePrintingDays(discord *discordgo.Session, channelId string, startDate time.Time, daysCount int) {
 	// Initial message before listing days
 	initialMessage := `@everyone Play when? React to the dates with:
-- 🐲 if you wanna play 
 - 🧙‍♂️ if you wanna DM 
 - 🏠 if you can host
+- Any other emoji if you want to play, try to use a unique one so we know the order of response
 `
 	discord.ChannelMessageSend(channelId, initialMessage)
 
